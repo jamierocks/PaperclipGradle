@@ -1,0 +1,33 @@
+plugins {
+    id 'groovy'
+
+    id 'idea'
+    id 'eclipse'
+
+    id 'net.minecrell.licenser' version '0.2.1'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+group = 'com.destroystokyo'
+archivesBaseName = project.name.toLowerCase()
+version = '1.0.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+}
+
+license {
+    header file('HEADER.txt')
+    include '**/*.groovy'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14.1'
+}
