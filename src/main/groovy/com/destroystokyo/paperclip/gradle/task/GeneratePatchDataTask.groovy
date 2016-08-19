@@ -26,12 +26,18 @@ package com.destroystokyo.paperclip.gradle.task
 
 import com.destroystokyo.paperclip.gradle.PaperclipExtension
 import com.destroystokyo.paperclip.gradle.PaperclipGradlePlugin
+import com.destroystokyo.paperclip.gradle.data.PatchData
+import io.sigpipe.jbsdiff.Diff
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.impldep.com.google.gson.Gson
 
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.security.MessageDigest
+
 /**
  * The generatePatchData task.
  */
@@ -41,7 +47,6 @@ class GeneratePatchDataTask extends DefaultTask {
 
     @TaskAction
     void doTask() {
-        final Path patch = PaperclipGradlePlugin.GENERATED_SOURCES.resolve('paperMC.patch')
         final Path json = PaperclipGradlePlugin.GENERATED_SOURCES.resolve('patch.json')
         final Path vanillaMinecraft = Paths.get(extension.vanillaMinecraft)
         final Path paperMinecraft = Paths.get(extension.paperMinecraft)
@@ -63,9 +68,39 @@ class GeneratePatchDataTask extends DefaultTask {
         final byte[] paperMinecraftBytes = Files.readAllBytes(paperMinecraft)
 
         logger.lifecycle(':creating patch')
-        Files.newOutputStream(vanillaMinecraft).withStream {
-
+        Files.newOutputStream(vanillaMinecraft).withStream { s ->
+            Diff.diff(vanillaMinecraftBytes, paperMinecraftBytes, s);
         }
+
+        // Add the SHA-256 hashes for the files
+        final MessageDigest digest = MessageDigest.getInstance("SHA-256")
+
+        logger.lifecycle(':hashing files')
+        final byte[] vanillaMinecraftHash = digest.digest(vanillaMinecraftBytes)
+        final byte[] paperMinecraftHash = digest.digest(paperMinecraftBytes)
+
+        final PatchData data = new PatchData()
+        data.setOriginalHash(toHex(vanillaMinecraftHash))
+        data.setPatchedHash(toHex(paperMinecraftHash))
+        data.setPatch('paperMC.patch')
+        data.setSourceUrl("https://s3.amazonaws.com/Minecraft.Download/versions/${extension.minecraftVersion}/minecraft_server.${extension.minecraftVersion}.jar")
+        data.setVersion(extension.minecraftVersion)
+
+        logger.lifecycle(':writing json file')
+        final Gson gson = new Gson()
+        final String jsonString = gson.toJson(data)
+
+        Files.newBufferedWriter(json, Charset.forName('UTF-8')).withWriter {
+            write(jsonString)
+        }
+    }
+
+    private static String toHex(final byte[] hash) {
+        final StringBuilder sb = new StringBuilder(hash.length * 2);
+        for (byte aHash : hash) {
+            sb.append(String.format("%02X", aHash & 0xFF));
+        }
+        return sb.toString();
     }
 
 }
