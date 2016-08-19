@@ -21,6 +21,8 @@ repositories {
 dependencies {
     compile gradleApi()
     compile localGroovy()
+
+    compile 'io.sigpipe:jbsdiff:1.0'
 }
 
 license {

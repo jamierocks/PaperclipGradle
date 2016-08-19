@@ -24,27 +24,24 @@
 
 package com.destroystokyo.paperclip.gradle
 
-import com.destroystokyo.paperclip.gradle.task.GeneratePatchDataTask
-import org.gradle.api.Plugin
-import org.gradle.api.Project
-
-import java.nio.file.Path
-import java.nio.file.Paths
-
 /**
- * The Paperclip Gradle plugin.
+ * The paperclip extension.
  */
-class PaperclipGradlePlugin implements Plugin<Project> {
+class PaperclipExtension {
 
-    static final Path GENERATED_SOURCES = Paths.get('build/generated-src')
+    /**
+     * The location of the Vanilla Minecraft jar.
+     */
+    String vanillaMinecraft
 
-    @Override
-    void apply(Project project) {
-        project.with {
-            PaperclipExtension paperclipExtension = extensions.create('paperclip', PaperclipExtension)
+    /**
+     * The location of the Paper Minecraft jar.
+     */
+    String paperMinecraft
 
-            task('generatePatchData', type: GeneratePatchDataTask)
-        }
-    }
+    /**
+     * The version of Minecraft.
+     */
+    String minecraftVersion
 
 }
